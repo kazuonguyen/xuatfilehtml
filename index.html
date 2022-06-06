@@ -1,0 +1,72 @@
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+ </head>
+ <body style=" background-color: #edf5ef;  font-family: 'Roboto',sans-serif; 
+    color: rgba(0,0,0,.6);  display: flex;
+ flex-direction: column;
+ align-items: center">
+ <h1>Xuất file dữ liệu theo mẫu</h1>
+<!-- Input element to upload an excel file -->
+<input type="file" id="file_upload" />
+<button style="margin-top: 10%;border-radius: 20px; " class="btn btn-success" onclick="upload()">Upload</button>  
+<br><br>
+<!-- container to display the json result -->
+<textarea id="json-result" style="display:none;height:500px;width:350px;"></textarea>
+<script>
+function upload() {
+  var files = document.getElementById('file_upload').files;
+  if(files.length==0){
+    alert("Please choose any file...");
+    return;
+  }
+  var filename = files[0].name;
+  var extension = filename.substring(filename.lastIndexOf(".")).toUpperCase();
+  if (extension == '.XLS' || extension == '.XLSX') {
+      excelFileToJSON(files[0]);
+  }else{
+      alert("Please select a valid excel file.");
+  }
+}
+ 
+//Method to read excel file and convert it into JSON 
+function excelFileToJSON(file){
+    try {
+      var reader = new FileReader();
+      reader.readAsBinaryString(file);
+      reader.onload = function(e) {
+ 
+          var data = e.target.result;
+          var workbook = XLSX.read(data, {
+              type : 'binary'
+          });
+          var result = {};
+          workbook.SheetNames.forEach(function(sheetName) {
+              var roa = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+              if (roa.length > 0) {
+                  result[sheetName] = roa;
+              }
+          });
+          //displaying the json result
+          var resultEle=document.getElementById("json-result");
+          resultEle.value=JSON.stringify(result, null, 4);
+          console.log(result.Sheet1);
+          (async () => {
+    const rawResponse = await fetch('http://localhost:5000/aa1', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(result.Sheet1)
+    });
+  
+   })();
+          }
+      }catch(e){
+          console.error(e);
+      }
+}
+</script>
+</body>
